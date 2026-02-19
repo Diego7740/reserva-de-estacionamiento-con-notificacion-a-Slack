@@ -1,3 +1,10 @@
+
+
+index.html
+index.html
++186
+-25
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -10,7 +17,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
+  <style>␊
     :root {
       --robotia-blue: #1e40ff;
       --robotia-blue-dark: #1632cc;
@@ -21,6 +28,84 @@
       margin: 0;
       font-family: Arial, sans-serif;
       background: var(--bg);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .login-overlay {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 360px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      padding: 22px;
+    }
+
+    .login-card h2 {
+      margin: 0 0 6px;
+      color: var(--robotia-blue);
+    }
+
+    .login-card p {
+      margin: 0 0 16px;
+      color: #475569;
+      font-size: 14px;
+    }
+
+    .login-field {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .login-field label {
+      font-size: 14px;
+      font-weight: bold;
+      color: #0f172a;
+    }
+
+    .login-field input {
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    .login-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 6px;
+      padding: 10px 12px;
+      color: #fff;
+      background: var(--robotia-blue);
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: var(--robotia-blue-dark);
+    }
+
+    .error {
+      color: #b91c1c;
+      font-size: 13px;
+      min-height: 18px;
     }
 
     /* ================= HEADER ================= */
@@ -62,6 +147,13 @@
       color: #fff;
     }
 
+    .header-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
     /* ================= CONTENEDOR ================= */
     .contenedor {
       display: grid;
@@ -86,67 +178,7 @@
       color: var(--robotia-blue);
     }
 
-    /* 🔵 Texto de los bloques/calendarios */
-    .calendar,
-    .calendar * {
-      color: var(--robotia-blue);
-    }
-
-    /* ================= FULLCALENDAR ================= */
-    .fc {
-      font-size: 12px;
-    }
-
-    .fc-timegrid-slot,
-    .fc-timegrid-slot-lane {
-      background: #fff !important;
-    }
-
-    .fc-event {
-      background-color: var(--robotia-blue) !important;
-      border: none !important;
-      border-radius: 6px !important;
-      font-size: 12px;
-      padding: 2px 4px;
-      position: relative;
-      color: #fff !important;
-    }
-
-    .fc-event::after {
-      content: "● OCUPADO";
-      position: absolute;
-      top: 2px;
-      right: 4px;
-      font-size: 9px;
-      font-weight: bold;
-      color: #fff;
-    }
-
-    /* ================= 📱 MOBILE ================= */
-    @media (max-width: 768px) {
-
-      header {
-        padding: 10px;
-      }
-
-      .header-grid {
-        grid-template-columns: 1fr;
-        gap: 8px;
-        text-align: center;
-      }
-
-      .hora {
-        text-align: center;
-      }
-
-      .contenedor {
-        grid-template-columns: 1fr;
-        gap: 16px;
-        padding: 10px;
-      }
-
-      .calendar {
-        padding: 10px;
+@@ -150,78 +235,154 @@
       }
 
       .titulo {
@@ -172,6 +204,31 @@
 
 <body>
 
+<main id="loginView" class="login-overlay">
+  <form id="loginForm" class="login-card">
+    <h2>Iniciar sesión</h2>
+    <p>Ingresa tus credenciales para entrar al sistema de reservas.</p>
+
+    <div class="login-field">
+      <label for="username">Usuario</label>
+      <input id="username" name="username" type="text" required autocomplete="username">
+    </div>
+
+    <div class="login-field">
+      <label for="password">Contraseña</label>
+      <input id="password" name="password" type="password" required autocomplete="current-password">
+    </div>
+
+    <div id="loginError" class="error"></div>
+
+    <div class="login-actions">
+      <small>Demo: admin / 1234</small>
+      <button class="btn" type="submit">Entrar</button>
+    </div>
+  </form>
+</main>
+
+<div id="appView" class="hidden">
 <header>
   <div class="header-grid">
     <div class="logo">
@@ -183,7 +240,10 @@
       <p id="fecha"></p>
     </div>
 
-    <div class="hora" id="hora"></div>
+    <div class="header-right">
+      <div class="hora" id="hora"></div>
+      <button id="logoutBtn" class="btn" type="button">Salir</button>
+    </div>
   </div>
 </header>
 
@@ -194,9 +254,57 @@
   <div class="calendar"><div class="titulo">Estacionamiento 4</div><div id="cal4"></div></div>
   <div class="calendar"><div class="titulo">Estacionamiento 5</div><div id="cal5"></div></div>
 </div>
+</div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  const LOGIN_KEY = 'reserva-auth';
+  const AUTH_USER = 'admin';
+  const AUTH_PASSWORD = '1234';
+
+  const loginView = document.getElementById('loginView');
+  const appView = document.getElementById('appView');
+  const loginForm = document.getElementById('loginForm');
+  const loginError = document.getElementById('loginError');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  function mostrarAplicacion() {
+    loginView.classList.add('hidden');
+    appView.classList.remove('hidden');
+  }
+
+  function mostrarLogin() {
+    appView.classList.add('hidden');
+    loginView.classList.remove('hidden');
+  }
+
+  if (localStorage.getItem(LOGIN_KEY) === 'ok') {
+    mostrarAplicacion();
+  } else {
+    mostrarLogin();
+  }
+
+  loginForm.addEventListener('submit', function (event) {
+    event.preventDefault();
+
+    const username = loginForm.username.value.trim();
+    const password = loginForm.password.value;
+
+    if (username === AUTH_USER && password === AUTH_PASSWORD) {
+      localStorage.setItem(LOGIN_KEY, 'ok');
+      loginForm.reset();
+      loginError.textContent = '';
+      mostrarAplicacion();
+      return;
+    }
+
+    loginError.textContent = 'Usuario o contraseña incorrectos.';
+  });
+
+  logoutBtn.addEventListener('click', function () {
+    localStorage.removeItem(LOGIN_KEY);
+    mostrarLogin();
+  });
 
   const fechaEl = document.getElementById('fecha');
   const horaEl = document.getElementById('hora');
